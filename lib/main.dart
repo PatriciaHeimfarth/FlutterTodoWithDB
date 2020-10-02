@@ -15,7 +15,7 @@ Future<void> databaseCall() async {
     join(await getDatabasesPath(), 'todo_database.db'),
     onCreate: (db, version) {
       return db.execute(
-        "CREATE TABLE todos(id INTEGER PRIMARY KEY, content TEXT)",
+        "CREATE TABLE IF NOT EXISTS todos(id INTEGER PRIMARY KEY, content TEXT)",
       );
     },
     version: 1,
@@ -126,7 +126,6 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
   initState() {
     super.initState();
     var todo1 = Todo(
-      id: 0,
       content: 'This is my Todo from Database',
     );
     databaseCall().then((var value) {
@@ -134,7 +133,9 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
         todos().then((List<Todo> list) {
           setState(() {
             data = new List();
-            data.add(list[0].content);
+            list.forEach((element) {
+              data.add(element.content);
+            });
           });
         });
       });
