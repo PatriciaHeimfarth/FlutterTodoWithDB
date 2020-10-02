@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 void main() => runApp(MyApp());
 
 
-Future<String> databaseCall() async {
+Future<void> databaseCall() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final Future<Database> database = openDatabase(
@@ -20,8 +20,11 @@ Future<String> databaseCall() async {
     },
     version: 1,
   );
+}
 
   Future<void> insertTodo(Todo todo) async {
+    final Future<Database> database = openDatabase(
+        join(await getDatabasesPath(), 'todo_database.db'));
     final Database db = await database;
     await db.insert(
       'todos',
@@ -30,8 +33,11 @@ Future<String> databaseCall() async {
     );
   }
 
-  Future<List<Todo>> todos() async {
 
+  Future<List<Todo>> todos() async {
+    final Future<Database> database = openDatabase(
+        join(await getDatabasesPath(), 'todo_database.db')
+    );
     final Database db = await database;
     final List<Map<String, dynamic>> maps = await db.query('todos');
 
@@ -44,7 +50,9 @@ Future<String> databaseCall() async {
   }
 
   Future<void> updateTodo(Todo todo) async {
-
+    final Future<Database> database = openDatabase(
+        join(await getDatabasesPath(), 'todo_database.db')
+    );
     final db = await database;
 
     await db.update(
@@ -56,7 +64,9 @@ Future<String> databaseCall() async {
   }
 
   Future<void> deleteTodo(int id) async {
-
+    final Future<Database> database = openDatabase(
+        join(await getDatabasesPath(), 'todo_database.db')
+    );
     final db = await database;
     await db.delete(
       'todos',
@@ -65,35 +75,10 @@ Future<String> databaseCall() async {
     );
   }
 
-  var todo1 = Todo(
-    id: 0,
-    content: 'This is my Todo',
-  );
-
-  await insertTodo(todo1);
-
-
-  print(await todos());
-
-  todo1 = Todo(
-    id: todo1.id,
-    content: 'This is my new Todo'
-  );
-  await updateTodo(todo1);
-
-
-  print(await todos());
-
-  await deleteTodo(todo1.id);
-  print(await todos());
-
-  return "ready";
-}
 
 class Todo {
   final int id;
   final String content;
-
 
   Todo({this.id, this.content});
 
@@ -104,7 +89,6 @@ class Todo {
 
     };
   }
-
 
   @override
   String toString() {
@@ -119,7 +103,7 @@ class MyApp extends StatelessWidget {
     return new MaterialApp(
       title: 'Flutter demo',
       theme: new ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.pink,
       ),
       home: new ToDoHomePage(title: 'Todo List'),
     );
@@ -141,14 +125,21 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
   @override
   initState() {
     super.initState();
-
-    databaseCall().then((String value) {
-      setState(() {
-        data = new List();
-        data.add(value);
+    var todo1 = Todo(
+      id: 0,
+      content: 'This is my Todo from Database',
+    );
+    databaseCall().then((var value) {
+      insertTodo(todo1).then((var value2) {
+        todos().then((List<Todo> list) {
+          setState(() {
+            data = new List();
+            data.add(list[0].content);
+          });
+        });
       });
     });
-  }
+    }
 
   @override
   Widget build(BuildContext context) {
@@ -166,7 +157,8 @@ class _ToDoHomePageState extends State<ToDoHomePage> {
         body: new Center(
           child: new ListView(
             children: data
-                .map((data) => new ListTile(
+                .map((data) =>
+            new ListTile(
               title: new Text("Get from Database"),
               subtitle: new Text(data),
             ))
