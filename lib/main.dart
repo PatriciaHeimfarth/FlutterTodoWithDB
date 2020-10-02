@@ -1,9 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:flutter/material.dart';
 
-void main() async {
+void main() => runApp(MyApp());
+
+
+Future<String> databaseCall() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final Future<Database> database = openDatabase(
@@ -81,6 +86,8 @@ void main() async {
 
   await deleteTodo(todo1.id);
   print(await todos());
+
+  return "ready";
 }
 
 class Todo {
@@ -102,5 +109,71 @@ class Todo {
   @override
   String toString() {
     return 'Todo{id: $id, content: $content}';
+  }
+}
+
+class MyApp extends StatelessWidget {
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return new MaterialApp(
+      title: 'Flutter demo',
+      theme: new ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: new ToDoHomePage(title: 'Todo List'),
+    );
+  }
+}
+
+class ToDoHomePage extends StatefulWidget {
+  ToDoHomePage({Key key, this.title}) : super(key: key);
+
+  final String title;
+
+  @override
+  _ToDoHomePageState createState() => new _ToDoHomePageState();
+}
+
+class _ToDoHomePageState extends State<ToDoHomePage> {
+  List data;
+
+  @override
+  initState() {
+    super.initState();
+
+    databaseCall().then((String value) {
+      setState(() {
+        data = new List();
+        data.add(value);
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (data == null) {
+      return new Scaffold(
+        appBar: new AppBar(
+          title: new Text("Loading..."),
+        ),
+      );
+    } else {
+      return new Scaffold(
+        appBar: new AppBar(
+          title: new Text(widget.title),
+        ),
+        body: new Center(
+          child: new ListView(
+            children: data
+                .map((data) => new ListTile(
+              title: new Text("Get from Database"),
+              subtitle: new Text(data),
+            ))
+                .toList(),
+          ),
+        ),
+      );
+    }
   }
 }
